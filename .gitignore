@@ -22,3 +22,4 @@ go.work
 /config.*
 *_test.go
 /util/mq/rocketmqV2/
+/log/
