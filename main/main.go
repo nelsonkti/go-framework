@@ -7,6 +7,7 @@ import (
 	"go-framework/config"
 	"go-framework/internal/mq"
 	"go-framework/internal/router"
+	"go-framework/internal/server"
 	"go-framework/util/mq/rocketmq"
 	"go-framework/util/xconfig"
 	"go-framework/util/xconfig/file"
@@ -57,9 +58,14 @@ func (p *logicProgram) Start() error {
 	rocketmqClient := rocketmq.NewClient(c.MQ, logger, redisClient["default"], mq.RegisterQueue)
 	rocketmqClient.ConsumerRun(mq.ConsumerHandler)
 
+	server.Engine.MQClient = rocketmqClient
+
 	r := gin.Default()
 	router.Register(r)
-	r.Run()
+	err = r.Run(":8080")
+	if err != nil {
+		panic(err)
+	}
 	return nil
 }
 

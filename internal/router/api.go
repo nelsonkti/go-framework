@@ -19,7 +19,8 @@ func Register(app *gin.Engine) {
 	api.GET("/hello", func(req *gin.Context) {
 
 		msg := fmt.Sprintf("Hello world-%d", 66)
-		server.Engine.MQClient.Producer.SendJobMessage(&job.OrderJob{}, []byte(msg))
+		err := server.Engine.MQClient.Producer.SendJobMessage(&job.OrderJob{}, []byte(msg))
+		fmt.Println(err)
 		//msg = fmt.Sprintf("Hello world-%d", 999)
 		//server.Engine.MQClient.Producer.SendJobMessage(&job.ShopJob{}, []byte(msg))
 		//for i := 0; i < 1; i++ {

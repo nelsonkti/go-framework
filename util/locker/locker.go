@@ -4,38 +4,26 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
-	"time"
 )
 
-type RedisLock struct {
-	Sync  *redsync.Redsync
-	Tries redsync.Option
-}
-
 type Mutex struct {
-	key   string
-	redis *RedisLock
+	sync  *redsync.Redsync
+	mutex *redsync.Mutex
 }
 
-func NewRedisLock(redis *redis.Client) *RedisLock {
+func NewMutex(redis *redis.Client) *Mutex {
 	pool := goredis.NewPool(redis)
-	return &RedisLock{
-		Sync:  redsync.New(pool),
-		Tries: redsync.WithTries(1),
-	}
-}
-
-func NewMutex(redisLocker *RedisLock) *Mutex {
-	return &Mutex{redis: redisLocker}
+	rs := redsync.New(pool)
+	return &Mutex{sync: rs}
 }
 
 // Lock acquires a distributed lock for the given key and duration.
-func (m *Mutex) Lock(key string, duration time.Duration) error {
-	m.key = key
-	return m.redis.Sync.NewMutex(m.key, redsync.WithExpiry(duration), m.redis.Tries).Lock()
+func (m *Mutex) Lock(key string, opts ...redsync.Option) error {
+	m.mutex = m.sync.NewMutex(key, opts...)
+	return m.mutex.Lock()
 }
 
-// UnLock 解锁
-func (m *Mutex) UnLock() (bool, error) {
-	return m.redis.Sync.NewMutex(m.key).Unlock()
+// Unlock 解锁
+func (m *Mutex) Unlock() (bool, error) {
+	return m.mutex.Unlock()
 }

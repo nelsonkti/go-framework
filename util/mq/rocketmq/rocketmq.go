@@ -4,7 +4,6 @@ import (
 	mq_http_sdk "github.com/aliyunmq/mq-http-go-sdk"
 	"github.com/go-redis/redis/v8"
 	"go-framework/util/helper"
-	"go-framework/util/locker"
 	"go-framework/util/mq/queue"
 	"go-framework/util/xlog"
 )
@@ -27,7 +26,6 @@ type Client struct {
 	queues      map[string]queue.Queue
 	Jobs        map[string]*QueueJob
 	Decoder     Decoder
-	redisLock   *locker.RedisLock
 }
 
 func NewClient(c interface{}, logger *xlog.Log, redisClient *redis.Client, fs ...clientHandler) (client *Client) {
@@ -42,7 +40,6 @@ func NewClient(c interface{}, logger *xlog.Log, redisClient *redis.Client, fs ..
 		redisClient: redisClient,
 		queues:      make(map[string]queue.Queue),
 		Jobs:        make(map[string]*QueueJob),
-		redisLock:   locker.NewRedisLock(redisClient),
 	}
 
 	for _, f := range fs {

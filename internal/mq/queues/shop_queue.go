@@ -11,7 +11,7 @@ type ShopQueue struct {
 }
 
 func (o *ShopQueue) Topic() string {
-	return "test"
+	return "shop"
 }
 
 func (o *ShopQueue) GroupId() string {

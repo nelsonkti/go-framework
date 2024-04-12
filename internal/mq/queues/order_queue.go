@@ -11,7 +11,7 @@ type OrderQueue struct {
 }
 
 func (o *OrderQueue) Topic() string {
-	return "order"
+	return "test"
 }
 
 func (o *OrderQueue) GroupId() string {
