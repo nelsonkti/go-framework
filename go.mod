@@ -10,13 +10,13 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redsync/redsync/v4 v4.12.1
 	github.com/gogap/errors v0.0.0-20210818113853-edfbba0ddea9
+	github.com/google/wire v0.6.0
 	github.com/json-iterator/go v1.1.12
 	github.com/judwhite/go-svc v1.2.1
 	github.com/nacos-group/nacos-sdk-go v1.1.4
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/panjf2000/ants/v2 v2.9.1
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/rs/xid v1.5.0
 	github.com/spf13/cobra v1.8.0
 	github.com/timest/env v0.0.0-20180717050204-5fce78d35255
 	go.mongodb.org/mongo-driver v1.14.0
@@ -99,7 +99,7 @@ require (
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/net v0.21.0 // indirect
-	golang.org/x/sync v0.3.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
