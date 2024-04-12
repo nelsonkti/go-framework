@@ -8,16 +8,31 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+type RedisClient struct {
+	client map[string]*redis.Client
+}
+
+func (c *RedisClient) Default() *redis.Client {
+	return c.client["default"]
+}
+
+func (c *RedisClient) GetClient(name string) *redis.Client {
+	if c.client[name] == nil {
+		return nil
+	}
+	return c.client[name]
+}
+
 // NewClient 初始化多个Redis客户端
-func NewClient(c interface{}) (map[string]*redis.Client, error) {
+func NewClient(c interface{}) *RedisClient {
 	cByte, err := json.Marshal(c)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	var configs []Config
 	err = json.Unmarshal(cByte, &configs)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	clients := make(map[string]*redis.Client)
@@ -35,7 +50,7 @@ func NewClient(c interface{}) (map[string]*redis.Client, error) {
 		}
 	}
 
-	return clients, nil
+	return &RedisClient{client: clients}
 }
 
 func connect(options *redis.Options) (*redis.Client, error) {

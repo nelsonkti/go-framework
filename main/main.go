@@ -53,9 +53,9 @@ func (p *logicProgram) Start() error {
 		panic(err)
 	}
 
-	redisClient, err := xredis.NewClient(c.Redis)
+	redisClient := xredis.NewClient(c.Redis)
 
-	rocketmqClient := rocketmq.NewClient(c.MQ, logger, redisClient["default"], mq.RegisterQueue)
+	rocketmqClient := rocketmq.NewClient(c.MQ, logger, redisClient.Default(), mq.RegisterQueue)
 	rocketmqClient.ConsumerRun(mq.ConsumerHandler)
 
 	server.Engine.MQClient = rocketmqClient
@@ -67,6 +67,10 @@ func (p *logicProgram) Start() error {
 		panic(err)
 	}
 	return nil
+}
+
+func NewService() {
+	return
 }
 
 func (p *logicProgram) Stop() error {
