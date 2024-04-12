@@ -1,7 +1,6 @@
 package helper
 
 import (
-	"fmt"
 	"go-framework/util/xlog"
 	"runtime"
 )
@@ -10,7 +9,6 @@ import (
 func RecoverPanic(logger *xlog.Log) {
 	err := recover()
 	if err != nil {
-		fmt.Println("进来了")
 		logger.Error(err)
 
 		buf := make([]byte, 2048)

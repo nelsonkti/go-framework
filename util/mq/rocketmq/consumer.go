@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	mq_http_sdk "github.com/aliyunmq/mq-http-go-sdk"
+	"github.com/go-redsync/redsync/v4"
 	"github.com/gogap/errors"
 	"github.com/panjf2000/ants/v2"
 	"go-framework/util/helper"
@@ -16,7 +17,7 @@ import (
 )
 
 const (
-	RetryTimeKeyFormat = "retry-time:%s:%s"
+	RetryTimeKeyFormat = "retryTime:%s:%s"
 	RockTimeKeyFormat  = "rock:%s:%s"
 )
 
@@ -61,13 +62,17 @@ func ConsumerMessage(client *Client, queue queue.Queue, opts ...ConsumerOption) 
 	consumer.pool, _ = ants.NewPool(consumer.concurrency)
 	consumer.consumer = client.Client().GetConsumer(client.conf.Namespace, queue.Topic(), queue.GroupId(), "")
 
+	go consumer.ConsumerMessage()
+	return
+}
+
+func (c *Consumer) ConsumerMessage() {
 	respChan := make(chan mq_http_sdk.ConsumeMessageResponse)
 	errChan := make(chan error)
 
-	go consumer.pullMessage(respChan, errChan)
+	go c.pullMessage(respChan, errChan)
 
-	consumer.StartProcessing(respChan, errChan)
-	return
+	c.StartProcessing(respChan, errChan)
 }
 
 // StartProcessing 启动消息处理循环
@@ -144,20 +149,24 @@ func (c *Consumer) processMessage(message mq_http_sdk.ConsumeMessageEntry) {
 
 	// 为300秒，超时会导致重复消费，Http协议，该时间不支持配置修改，
 	// 放置最前面，放置其他调用类等情况的致命异常
-	mutex := locker.NewMutex(c.client.redisLock)
-	err := mutex.Lock(rockKey, time.Second*600)
+	mutex := locker.NewMutex(c.client.redisClient)
+	err := mutex.Lock(rockKey, redsync.WithExpiry(time.Second*600))
 	if err != nil {
 		c.client.Logger.Errorf("key: %s 消费id：%s，消息重复消费: %+v", rockKey, message.MessageId, err)
 		return
 	}
-	defer mutex.UnLock()
+	defer func() {
+		res, err2 := mutex.Unlock()
+		if !res || err2 != nil {
+			c.client.Logger.Errorf("key: %s 消费id：%s，解锁状态：%+v; 消息解锁失败: %+v", rockKey, message.MessageId, res, err2)
+		}
+	}()
 
 	times := c.client.redisClient.Incr(context.Background(), retryTimesKey).Val()
 	c.client.redisClient.Expire(context.Background(), retryTimesKey, time.Second*600)
 
-	fmt.Println(message.MessageId, "应答次数， retryTimes", times)
 	isAsk := true
-	if times > c.retryTimes+1 {
+	if times > c.retryTimes {
 		c.addAskBuffer(message, &isAsk)
 	}
 
@@ -170,22 +179,18 @@ func (c *Consumer) processMessage(message mq_http_sdk.ConsumeMessageEntry) {
 		}
 
 		if c.retryTimes == 0 {
-			fmt.Println(message.MessageId, "直接应答， retryTimes", c.retryTimes)
 			c.addAskBuffer(message, &isAsk)
 		}
 
 		// 捕获panic
 		var isError bool
 		c.taskExecute(task, msgBodyByte, &isError)
-		fmt.Println(message.MessageId, "出现报错， isError", isError)
 		if isError {
-			fmt.Println(message.MessageId, "出现报错， isAsk", isAsk)
 			isAsk = false
 		}
 	}
 
 	c.addAskBuffer(message, &isAsk)
-	fmt.Println(message.MessageId, "准备结束， isAsk", isAsk)
 }
 
 func (c *Consumer) taskExecute(task queue.Job, msgBodyByte []byte, isError *bool) {
@@ -209,13 +214,11 @@ func (c *Consumer) taskExecute(task queue.Job, msgBodyByte []byte, isError *bool
 func (c *Consumer) addAskBuffer(message mq_http_sdk.ConsumeMessageEntry, isAsk *bool) {
 	if !*isAsk {
 		NotAskBuffer = append(NotAskBuffer, message)
-		fmt.Println(message.MessageId, "不进行 isAsk")
 		return
 	}
 	defer c.askBufferLock.Unlock()
 	c.askBufferLock.Lock()
 	c.askBuffer = append(c.askBuffer, message)
-	fmt.Println(message.MessageId, "进行 isAsk")
 	*isAsk = false
 }
 
@@ -252,22 +255,21 @@ func (c *Consumer) sendBatchAsk() {
 		messageId = append(messageId, message.MessageId)
 		receiptHandle = append(receiptHandle, message.ReceiptHandle)
 	}
-	fmt.Println("出现应答：", receiptHandle)
-	//ackErr := c.consumer.AckMessage(receiptHandle)
-	//if ackErr != nil {
-	//	// 某些消息的句柄可能超时，会导致消息消费状态确认不成功。
-	//	if errAckItems, ok := ackErr.(errors.ErrCode).Context()["Detail"].([]mq_http_sdk.ErrAckItem); ok {
-	//		c.client.Logger.Errorf("消息id: %+v,确认消费失败: %+v", messageId, errAckItems)
-	//
-	//	} else {
-	//		c.client.Logger.Errorf("消息id: %+v,确认消费失败: %+v", messageId, ackErr)
-	//	}
-	//	time.Sleep(time.Second * 3)
-	//	return
-	//}
+	ackErr := c.consumer.AckMessage(receiptHandle)
+	if ackErr != nil {
+		// 某些消息的句柄可能超时，会导致消息消费状态确认不成功。
+		if errAckItems, ok := ackErr.(errors.ErrCode).Context()["Detail"].([]mq_http_sdk.ErrAckItem); ok {
+			c.client.Logger.Errorf("消息id: %+v,确认消费失败: %+v", messageId, errAckItems)
+
+		} else {
+			c.client.Logger.Errorf("消息id: %+v,确认消费失败: %+v", messageId, ackErr)
+		}
+		time.Sleep(time.Second * 3)
+		return
+	}
 
 	c.client.Logger.Infof("消息成功: %+v", messageId)
-	c.askBuffer = c.askBuffer[:askBufferLen]
+	c.askBuffer = c.askBuffer[askBufferLen:]
 }
 
 func (c *Consumer) errorHandler(errChan chan error) {

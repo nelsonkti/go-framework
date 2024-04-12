@@ -19,8 +19,8 @@ func (o *OrderJob) Name() string {
 func (o *OrderJob) Execute(bytes []byte) error {
 	fmt.Println(string(bytes))
 	time.Sleep(time.Second * 5)
-	fmt.Println("准备进行报错")
-	panic("not implemented")
+	//fmt.Println("准备进行报错")
+	//panic("not implemented")
 	fmt.Println("执行完成")
 	return nil
 }
