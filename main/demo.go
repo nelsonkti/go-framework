@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/judwhite/go-svc"
 	"go-framework/config"
 	"go-framework/internal/router"
 	"go-framework/internal/server"
+	"go-framework/util/app"
 	"go-framework/util/xconfig"
 	"go-framework/util/xconfig/file"
 	"go-framework/util/xlog"
@@ -16,12 +16,12 @@ import (
 	"syscall"
 )
 
-type logicProgram struct {
+type demoProgram struct {
 	once sync.Once
 }
 
 func main() {
-	p := &logicProgram{}
+	p := &demoProgram{}
 	if err := svc.Run(p, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL); err != nil {
 		fmt.Println(err)
 	}
@@ -29,7 +29,7 @@ func main() {
 }
 
 // svc 服务运行框架 程序启动时执行Init+Start, 服务终止时执行Stop
-func (p *logicProgram) Init(env svc.Environment) error {
+func (p *demoProgram) Init(env svc.Environment) error {
 	if env.IsWindowsService() {
 		dir := filepath.Dir(os.Args[0])
 		return os.Chdir(dir)
@@ -37,7 +37,7 @@ func (p *logicProgram) Init(env svc.Environment) error {
 	return nil
 }
 
-func (p *logicProgram) Start() error {
+func (p *demoProgram) Start() error {
 	var c config.Conf
 	path := "/Users/fzy/workspace/Go/src/rrzuji/go-framework"
 	err := xconfig.New(&c, file.NewConfig(path+"/config.yaml"))
@@ -52,18 +52,18 @@ func (p *logicProgram) Start() error {
 
 	svc := server.NewSvcContext(c, logger)
 
-	r := gin.Default()
-	router.Register(r, svc)
+	a := app.New()
+	router.Register2(a, svc)
 
-	r.Use()
-	err = r.Run(c.Server.Http.Addr)
+	a.Run(":8081")
+
 	if err != nil {
 		panic(err)
 	}
 	return nil
 }
 
-func (p *logicProgram) Stop() error {
+func (p *demoProgram) Stop() error {
 	p.once.Do(func() {
 	})
 	return nil

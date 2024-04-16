@@ -3,15 +3,16 @@ package router
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"go-framework/internal/controller/user_controller"
 	"go-framework/internal/mq/job"
 	"go-framework/internal/server"
+	"go-framework/util/app"
 	"net/http"
-	"time"
 )
 
-func Register(app *gin.Engine) {
+func Register(app *gin.Engine, ctx *server.SvcContext) {
+	app.GET("/kkk", user_controller.GetUserInfo(ctx))
 	app.GET("/", func(c *gin.Context) {
-		time.Sleep(5 * time.Second)
 		c.String(http.StatusOK, "Welcome Gin Server")
 	})
 
@@ -36,4 +37,8 @@ func Register(app *gin.Engine) {
 			"message": "Hello World",
 		})
 	})
+}
+
+func Register2(app *app.App, ctx *server.SvcContext) {
+	app.GET("/kkk2", user_controller.GetUserInfo2(ctx))
 }
