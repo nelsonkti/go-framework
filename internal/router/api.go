@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-framework/internal/controller/user_controller"
-	"go-framework/internal/mq/job"
 	"go-framework/internal/server"
 	"go-framework/util/app"
 	"net/http"
 )
+
+type StudentRequest struct {
+	Name string `json:"name" binding:"required"`
+}
 
 func Register(app *gin.Engine, ctx *server.SvcContext) {
 	app.GET("/kkk", user_controller.GetUserInfo(ctx))
@@ -17,11 +20,16 @@ func Register(app *gin.Engine, ctx *server.SvcContext) {
 	})
 
 	api := app.Group("/api")
-	api.GET("/hello", func(req *gin.Context) {
-
-		msg := fmt.Sprintf("Hello world-%d", 66)
-		err := server.Engine.MQClient.Producer.SendJobMessage(&job.OrderJob{}, []byte(msg))
-		fmt.Println(err)
+	api.GET("/hello", func(c *gin.Context) {
+		var studentRequest StudentRequest
+		if err := c.ShouldBind(&studentRequest); err != nil {
+			fmt.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		//msg := fmt.Sprintf("Hello world-%d", 66)
+		//err := server.Engine.MQClient.Producer.SendJobMessage(&job.OrderJob{}, []byte(msg))
+		//fmt.Println(err)
 		//msg = fmt.Sprintf("Hello world-%d", 999)
 		//server.Engine.MQClient.Producer.SendJobMessage(&job.ShopJob{}, []byte(msg))
 		//for i := 0; i < 1; i++ {
@@ -33,12 +41,12 @@ func Register(app *gin.Engine, ctx *server.SvcContext) {
 		//	//err = client.Producer.SendMessage("test", []byte(fmt.Sprintf("test: %s", time.Now().Format(time.DateTime))))
 		//}
 		fmt.Println("2313")
-		req.JSON(200, gin.H{
+		c.JSON(200, gin.H{
 			"message": "Hello World",
 		})
 	})
 }
 
-func Register2(app *app.App, ctx *server.SvcContext) {
+func Register2(app *app.Engine, ctx *server.SvcContext) {
 	app.GET("/kkk2", user_controller.GetUserInfo2(ctx))
 }

@@ -1,9 +1,10 @@
 package server
 
 import (
+	"context"
 	"go-framework/config"
+	"go-framework/internal/container"
 	"go-framework/internal/mq"
-	"go-framework/internal/provider"
 	"go-framework/util/mq/rocketmq"
 	"go-framework/util/xlog"
 	"go-framework/util/xredis"
@@ -14,12 +15,13 @@ import (
 var Engine *SvcContext
 
 type SvcContext struct {
+	Ctx         context.Context
 	Conf        config.Conf
 	DBEngine    *databese.Engine
 	RedisClient *xredis.RedisClient
 	Logger      *xlog.Log
 	MQClient    *rocketmq.Client
-	Container   *provider.Container
+	Container   *container.Container
 }
 
 func NewSvcContext(c config.Conf, logger *xlog.Log) *SvcContext {
@@ -30,9 +32,10 @@ func NewSvcContext(c config.Conf, logger *xlog.Log) *SvcContext {
 	return &SvcContext{
 		Conf:        c,
 		Logger:      logger,
+		Ctx:         context.Background(),
 		DBEngine:    xsql.NewClient(c.DB),
 		RedisClient: xredis.NewClient(c.Redis),
 		MQClient:    rocketmqClient,
-		Container:   provider.Register(),
+		Container:   container.Register(),
 	}
 }

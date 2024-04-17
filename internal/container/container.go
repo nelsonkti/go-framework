@@ -1,4 +1,4 @@
-package provider
+package container
 
 import (
 	"go-framework/internal/dao/order_dao"
@@ -10,7 +10,5 @@ type Container struct {
 }
 
 func Register() *Container {
-	return &Container{
-		OrderService: orderService.NewOrderService(order_dao.NewOrderDao()),
-	}
+	return &Container{OrderService: orderService.NewOrderService(order_dao.NewOrderDao())}
 }
