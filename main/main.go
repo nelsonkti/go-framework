@@ -77,6 +77,7 @@ func newApp(c config.Conf, s *server.SvcContext) {
 
 func (p *logicProgram) Stop() error {
 	p.once.Do(func() {
+		defer p.svcContext.RedisClient.Close()
 		defer p.svcContext.DBEngine.Close()
 	})
 	return nil

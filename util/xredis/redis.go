@@ -68,3 +68,13 @@ func connect(options *redis.Options) (*redis.Client, error) {
 	}
 	return client, nil
 }
+
+func (c *RedisClient) Close() {
+	for _, client := range c.client {
+		err := client.Close()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+}
