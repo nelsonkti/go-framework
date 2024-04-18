@@ -18,7 +18,6 @@ type DatabaseClient interface {
 	Connect(c map[string]config.DBConfig)
 	ConnType(database string) bool
 	Result(c *Engine)
-	Close()
 }
 
 func (e *Engine) Close() {

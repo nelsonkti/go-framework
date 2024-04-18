@@ -90,12 +90,3 @@ func (g *Gorm) ConnType(database string) bool {
 func (g *Gorm) Result(c *databese.Engine) {
 	c.Gorm = g.client
 }
-
-func (g *Gorm) Close() {
-	for _, db := range g.client {
-		sqlDB, err := db.DB()
-		if err != nil && sqlDB.Ping() != nil {
-			_ = sqlDB.Close()
-		}
-	}
-}
