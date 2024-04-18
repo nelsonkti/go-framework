@@ -8,6 +8,7 @@ import (
 	"go-framework/util/xsql/xgorm/mysql"
 	"go-framework/util/xsql/xgorm/postgresql"
 	"gorm.io/gorm"
+	"time"
 )
 
 type DB struct {
@@ -60,6 +61,17 @@ func (g *Gorm) Connect(c map[string]config.DBConfig) {
 			databases[dbConfig.Database] = conn
 		}
 
+		sqlDB, err := conn.DB()
+
+		// SetMaxIdleConns 用于设置连接池中空闲连接的最大数量。
+		sqlDB.SetMaxIdleConns(10)
+
+		// SetMaxOpenConns 设置打开数据库连接的最大数量。
+		sqlDB.SetMaxOpenConns(100)
+
+		// SetConnMaxLifetime 设置了连接可复用的最大时间。
+		sqlDB.SetConnMaxLifetime(time.Hour)
+
 		if dbConfig.Alias == "default" {
 			databases[dbConfig.Database] = conn
 		}
@@ -77,4 +89,13 @@ func (g *Gorm) ConnType(database string) bool {
 
 func (g *Gorm) Result(c *databese.Engine) {
 	c.Gorm = g.client
+}
+
+func (g *Gorm) Close() {
+	for _, db := range g.client {
+		sqlDB, err := db.DB()
+		if err != nil && sqlDB.Ping() != nil {
+			_ = sqlDB.Close()
+		}
+	}
 }

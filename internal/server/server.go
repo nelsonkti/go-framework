@@ -12,8 +12,6 @@ import (
 	"go-framework/util/xsql/databese"
 )
 
-var Engine *SvcContext
-
 type SvcContext struct {
 	Ctx         context.Context
 	Conf        config.Conf

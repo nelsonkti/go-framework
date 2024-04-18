@@ -20,7 +20,8 @@ import (
 )
 
 type logicProgram struct {
-	once sync.Once
+	once       sync.Once
+	svcContext *server.SvcContext
 }
 
 func main() {
@@ -52,24 +53,31 @@ func (p *logicProgram) Start() error {
 		panic(err)
 	}
 
-	svc := server.NewSvcContext(c, logger)
+	p.svcContext = server.NewSvcContext(c, logger)
 
+	go func() {
+		newApp(c, p.svcContext)
+	}()
+
+	return nil
+}
+
+func newApp(c config.Conf, s *server.SvcContext) {
 	// 创建并配置验证器
 	r := gin.Default()
-	router.Register(r, svc)
-
+	router.Register(r, s)
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("chinese", validator2.ChineseValidation)
 	}
-	err = r.Run(c.Server.Http.Addr)
+	err := r.Run(c.Server.Http.Addr)
 	if err != nil {
 		panic(err)
 	}
-	return nil
 }
 
 func (p *logicProgram) Stop() error {
 	p.once.Do(func() {
+		defer p.svcContext.DBEngine.Close()
 	})
 	return nil
 }
