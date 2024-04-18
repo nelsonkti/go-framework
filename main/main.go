@@ -43,15 +43,9 @@ func (p *logicProgram) Init(env svc.Environment) error {
 func (p *logicProgram) Start() error {
 	var c config.Conf
 	path := "/Users/fzy/workspace/Go/src/rrzuji/go-framework"
-	err := xconfig.New(&c, file.NewConfig(path+"/config.yaml"))
-	if err != nil {
-		panic(err)
-	}
+	xconfig.New(&c, file.NewConfig(path+"/config.yaml"))
 
-	logger, err := xlog.NewLogger(path + "/log/test.log")
-	if err != nil {
-		panic(err)
-	}
+	logger := xlog.NewLogger(path + "/log/test.log")
 
 	p.svcContext = server.NewSvcContext(c, logger)
 
@@ -70,6 +64,7 @@ func newApp(c config.Conf, s *server.SvcContext) {
 		v.RegisterValidation("chinese", validator2.ChineseValidation)
 	}
 	err := r.Run(c.Server.Http.Addr)
+
 	if err != nil {
 		panic(err)
 	}

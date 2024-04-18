@@ -1,11 +1,13 @@
 package user_controller
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-framework/internal/server"
 	"go-framework/util/app"
 	"go-framework/util/xerror"
+	"go-framework/util/xhttp"
 	"net/http"
 )
 
@@ -17,9 +19,15 @@ func GetUserInfo(ctx *server.SvcContext) gin.HandlerFunc {
 			if xerror.IsStatus(err, 3002) {
 				fmt.Println("Error 3002")
 			}
-			err1 := xerror.UnmarshalError(err)
-			fmt.Println(err1)
+
 		}
+
+		err4 := xerror.IsError(err)
+		fmt.Println("err4", err4)
+
+		err3 := errors.New("错误测试")
+		err9 := xerror.IsError(err3)
+		fmt.Println("err9", err9)
 		type student struct {
 			Name string `json:"name"`
 			Age  int    `json:"age"`
@@ -27,7 +35,8 @@ func GetUserInfo(ctx *server.SvcContext) gin.HandlerFunc {
 		var stu student
 		stu.Name = "fuzengyao"
 		stu.Age = 18
-		c.JSON(http.StatusOK, stu)
+
+		c.JSON(http.StatusOK, xhttp.Error(err))
 	}
 }
 

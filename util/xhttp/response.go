@@ -1,6 +1,7 @@
 package xhttp
 
 import (
+	"go-framework/util/xerror"
 	"net/http"
 )
 
@@ -40,14 +41,25 @@ func ErrMsg(message string, status ...int) *RespData {
 
 // Error 错误类型响应
 func Error(err error, status ...int) Response {
+	code := http.StatusOK
 	statusCode := http.StatusBadRequest
+	message := err.Error()
+	var data interface{}
+	if xerror.IsError(err) {
+		newError := xerror.UnmarshalError(err)
+		statusCode = int(newError.Status)
+		code = int(newError.Status)
+		message = newError.Message
+		data = newError.Metadata
+	}
 	if len(status) != 0 {
 		statusCode = status[0]
 	}
 	return &RespData{
-		Code:    http.StatusOK,
+		Code:    code,
 		Status:  statusCode,
-		Message: err.Error(),
+		Message: message,
+		Data:    data,
 	}
 }
 

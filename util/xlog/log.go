@@ -15,7 +15,7 @@ type LogOption struct {
 }
 
 // NewLogger 创建并返回一个配置好的zap.Logger实例
-func NewLogger(logPath string, opts ...LogOptionFunc) (*Log, error) {
+func NewLogger(logPath string, opts ...LogOptionFunc) *Log {
 	w := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   logPath,
 		MaxSize:    500, // megabytes
@@ -44,42 +44,14 @@ func NewLogger(logPath string, opts ...LogOptionFunc) (*Log, error) {
 
 	logger := NewLog(zap.New(core), logOption.Filter)
 
-	return logger, nil
+	return logger
 }
 
 func With(l *Log) *Log {
 	// 创建一个新的Log实例
 	log := &Log{Logger: l.Logger}
-	//// 直接将新Log实例的Logger字段设置为指向原始Log实例的Logger字段的指针
-	//
-	//fmt.Println("Person 1:", &l)          // 输出 Person 1 的值
-	//fmt.Println("Person 2:", &log)        // 输出 Person 2 的值
-	//fmt.Println("Person 11:", l.Logger)   // 输出 Person 1 的值
-	//fmt.Println("Person 22:", log.Logger) // 输出 Person 2 的值
 	return log
 }
-
-//
-//func NewLogger2(logPath string, opts ...CoreOption) *zap.Logger {
-//	w := zapcore.AddSync(&lumberjack.Logger{
-//		Filename:   logPath,
-//		MaxSize:    500, // megabytes
-//		MaxBackups: 3,
-//		MaxAge:     28, // days
-//	})
-//
-//	encoderConfig := zap.NewProductionEncoderConfig()
-//	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-//	core := zapcore.NewCore(
-//		zapcore.NewJSONEncoder(encoderConfig),
-//		w,
-//		zap.InfoLevel,
-//	)
-//
-//	zap.New(core)
-//
-//	return zap.New(core)
-//}
 
 // WithGlobalFields 添加全局字段到Core。
 func WithGlobalFields(fields ...zap.Field) LogOptionFunc {
