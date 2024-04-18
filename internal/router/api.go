@@ -10,7 +10,7 @@ import (
 )
 
 type StudentRequest struct {
-	Name string `json:"name" binding:"required"`
+	Name string `json:"name" binding:"required,chinese" label:"文章ID"`
 }
 
 func Register(app *gin.Engine, ctx *server.SvcContext) {

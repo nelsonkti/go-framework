@@ -82,6 +82,16 @@ func Status(err error) int32 {
 	return http.StatusInternalServerError
 }
 
+func IsError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if se := new(Error); errors.As(err, &se) {
+		return true
+	}
+	return false
+}
+
 func UnmarshalError(err error) *Error {
 	if err == nil {
 		return nil

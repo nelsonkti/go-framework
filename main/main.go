@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/judwhite/go-svc"
 	"go-framework/config"
 	"go-framework/internal/router"
 	"go-framework/internal/server"
+	validator2 "go-framework/util/validator"
 	"go-framework/util/xconfig"
 	"go-framework/util/xconfig/file"
 	"go-framework/util/xlog"
@@ -51,10 +54,13 @@ func (p *logicProgram) Start() error {
 
 	svc := server.NewSvcContext(c, logger)
 
+	// 创建并配置验证器
 	r := gin.Default()
 	router.Register(r, svc)
 
-	r.Use()
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("chinese", validator2.ChineseValidation)
+	}
 	err = r.Run(c.Server.Http.Addr)
 	if err != nil {
 		panic(err)
